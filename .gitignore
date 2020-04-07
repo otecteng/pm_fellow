@@ -1,0 +1,15 @@
+.vscode/
+__pycache__/
+build/
+dist/
+*.egg-info/
+*.csv
+repofollow/__pycache__/
+data/
+log/
+doc/
+env/
+infrastructure/
+kanban/*.py
+
+
