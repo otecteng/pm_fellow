@@ -6,12 +6,7 @@ Usage:
     pmfellow project <command> [--site=<id>] [--since=<id>] [--private] [--projects=<filter>] [--logging=<debug>]
     pmfellow user <command> [--site=<id>] [--since=<id>] [--until=<id>] [--logging=<debug>]
     pmfellow group <command> [--site=<id>] [<args>]       
-    pmfellow commit <command> [--site=<id>] [--project=<id>] [--since=<id>] [--limit=<n>] [--until=<date>] [--style=<str>] [--logging=<debug>]
-    pmfellow event <command> [--site=<id>] [--project=<id>] [--since=<id>] [--limit=<n>] [--until=<date>]
-    pmfellow pr <command> [--site=<id>] [--since=<id>] [--logging=<debug>]
-    pmfellow tag <command> [--site=<id>] [--project=<id>] [--since=<id>] [--limit=<n>] [--logging=<debug>]
-    pmfellow release <command> [--site=<id>] [--project=<id>] [--since=<id>] [--logging=<debug>]
-    pmfellow branch <command> [--site=<id>] [--project=<id>] [--since=<id>] [--limit=<n>] [--logging=<debug>]
+    pmfellow issue <command> [--site=<id>] [--project=<id>] [--since=<id>] [--limit=<n>] [--until=<date>] [--style=<str>] [--logging=<debug>]
 
 Options: 
     -h,--help 
@@ -31,8 +26,6 @@ Example:
     pmfellow projects remote owner
     pmfellow projects list
     pmfellow projects import site_id
-    pmfellow commit update *
-    pmfellow commit update project
     pmfellow user import
 """
 import os
@@ -129,52 +122,15 @@ def main():
             return
 
     projects = parse_projects_args(arguments,injector)
-    if arguments["pr"]:
-        if command == "import":
-            Crawler(site,injector).import_pull_requests(projects)
-            return
 
-    if arguments["commit"]:
+    if arguments["issue"]:
         if command == "import":
             until_date = None
             if arguments["--until"]:
                 until_date = datetime.datetime.strptime(arguments["--until"], "%Y-%m-%d")
-            logging.info("importing commits of {} from ".format(site.name,until_date))
-            Crawler(site,injector).import_commits(projects,limit = arguments["--limit"], until = until_date)
-        if command == "stat":
-            logging.info("stat commits of {}".format(site.name))
-            Crawler(site,injector).stat_commits(projects,limit = arguments["--limit"])
-        if command == "style":
-            logging.info("check style of commits of {}".format(site.name))
-            for project in projects:
-                for commit in injector.get_commits(project=project):
-                    commit.style_check(re.compile(arguments["--style"]))
-            injector.db_commit()
+            logging.info("importing issues of {} from ".format(site.name,until_date))
+            Crawler(site,injector).import_issues(projects,limit = arguments["--limit"], until = until_date)
             return
-
-
-    if arguments["event"]:
-        if command == "import":
-            logging.info("importing event of {} from ".format(site.name))
-            Crawler(site,injector).import_events(projects,limit = arguments["--limit"])
-
-    if arguments["tag"]:
-        if command == "import":
-            logging.info("importing tags of {}".format(site.name))
-            Crawler(site,injector).get_tags(projects)
-        return
-
-    if arguments["release"]:
-        if command == "import":
-            logging.info("importing release of {}".format(site.name))
-            Crawler(site,injector).import_releases(projects)
-        return
-
-    if arguments["branch"]:
-        if command == "import":
-            logging.info("importing branch of {}".format(site.name))
-            Crawler(site,injector).import_branches(projects)
-        return
 
     if arguments["group"]:
         if command == "import":

@@ -86,166 +86,46 @@ class Group(Base):
             ret.repo_count = data["repositories"]["totalCount"]
         return ret
 
-class CommitFile(Base):
-    __tablename__ = 'commit_file'
-    iid = Column(Integer, primary_key=True)
-    commit_iid = Column(Integer)
-    commit_id = Column(String(64))
-    id = Column(String(64))
-    filename = Column(String(128))
-    status = Column(String(64))
-    additions = Column(Integer)
-    deletions = Column(Integer)
-    changes = Column(Integer)
-    def __init__(self,data):
-        self.path = data["path_with_namespace"]
-        self.created_at = datetime.datetime.strptime(data["created_at"][:19], "%Y-%m-%dT%H:%M:%S")
-        self.updated_at = datetime.datetime.strptime(data["last_activity_at"][:19], "%Y-%m-%dT%H:%M:%S")
-        self.owner = data["owner"]["username"]
-
-class Commit(Base):
-    __tablename__ = 'commit'
+class Issue(Base):
+    __tablename__ = 'issue'
     iid = Column(Integer, primary_key=True)
     id = Column(String(64))
     project = Column(String(128))
-    author_name = Column(String(64))
-    author_email = Column(String(64))
-    message = Column(String(1024))
-    created_at = Column(DateTime)
-    additions = Column(Integer)
-    deletions = Column(Integer)
-    total = Column(Integer)
-    issue = Column(String(64))
-    style_checked = Column(Boolean)
     site = Column(Integer)
     project_oid = Column(Integer)
     oid = Column(Integer)
-    
-    def __init__(self,data):
-        self.id = data["id"]
-        self.message = data["message"].rstrip()[:1000]
-        self.author_name = data["author_name"]
-        self.author_email = data["author_email"][:64]
-        self.created_at = data["authored_date"]
-    
-    @staticmethod
-    def find_issue(message):
-        if message is None:
-            return None
-        issue = None
-        start = message.find('#')
-        if  start  < 1 :
-            return None
-        issue = message[start + 1:]
-        pos = issue.find(' ')
-        if pos > 1 :
-            issue = issue[0:pos]
-        pos = issue.find(':')
-        if pos > 1 :
-            issue = issue[0:pos]
-        pos = issue.find('：')
-        if pos > 1 :
-            issue = issue[0:pos]
-        return issue[:64]
 
+    issuetype = Column(String(64))
+    author_name = Column(String(64))
+    author_email = Column(String(64))
+    summary = Column(String(512))
+    description = Column(String(1024))
+    created_at = Column(DateTime)
+    updated_at = Column(DateTime)
+    
     def __str__(self):
         return "{}[{}]:{}".format(self.created_at,self.author_email,self.message)
 
     @staticmethod
-    def from_gitee(data):
-        # sample: date: 2019-11-24T23:22:06.000+08:00
-        data["commit"]["author"]["date"] = datetime.datetime.strptime(data["commit"]["author"]["date"][:19], "%Y-%m-%dT%H:%M:%S")
-        author = data["commit"]["author"]
-        content = {"author_name":author["name"],"author_email":author["email"],"authored_date":author["date"],"message":data["commit"]["message"]}
-        return Commit(content)
-
-    @staticmethod
-    def from_gitlab(data,project = project):
-        # sample: authored_date: 2019-11-24T23:22:06.000+08:00
-        data["authored_date"] = datetime.datetime.strptime(data["authored_date"][:19], "%Y-%m-%dT%H:%M:%S")
-        ret = Commit(data)
-        ret.project = project
-        return ret
-
-    @staticmethod
-    def from_github(data,project = project):
-        data["commit"]["committer"]["date"] = datetime.datetime.strptime(data["commit"]["committer"]["date"][:19], "%Y-%m-%dT%H:%M:%S")
-        author = data["commit"]["committer"]
-        content = {"id":data["sha"],
-            "author_name":author["name"],"author_email":author["email"],"authored_date":author["date"],
-            "message":data["commit"]["message"][:1000]
-        }
-        ret = Commit(content)
-        # ret.issue = Commit.find_issue(content["message"])
-        ret.project = project
-        return ret
-
-    def load_github_stat(self,data):
-        self.total = data["stats"]["total"]
-        self.additions = data["stats"]["additions"]
-        self.deletions = data["stats"]["deletions"]
-        return self
-
-    @staticmethod
-    def append_count_github(commit,data):
-        commit.additions = data["stats"]["additions"]
-        commit.deletions = data["stats"]["deletions"]
-        commit.total = data["stats"]["total"]
-        return commit
-
-    def style_check(self,style = None):
-        if style is None:
-            style = r'(.*)#(.*)\s+(.*):\s+(.*?)'
-        self.style_checked = (re.match(style, self.message, flags=0) is not None)
-        return self
-
-class Event(Base):
-    __tablename__ = 'project_event'
-    iid = Column(Integer, primary_key=True)
-    oid = Column(Integer)
-    project = Column(String(128))
-    project_oid = Column(Integer)
-    site = Column(Integer)
-    author = Column(String(64))
-    event_type = Column(String(64))
-    description = Column(String(1024))
-    created_at = Column(DateTime)
-
-    def __init__(self,project = None):
-        self.created_at = datetime.datetime.now()
-        if project is not None:
-            self.project = project.path
-            self.project_oid = project.oid
-            self.site = project.site
-
-    def __str__(self):
-        return "{}[{}]:{}({})".format(self.created_at,self.author,self.project,self.event_type)
-
-    @staticmethod
-    def from_github(data, project = None, ret = None):
+    def from_jira(data,ret = None):
         if ret is None:
-            ret = Event(project)
+            ret = Issue()
+        if len(data) == 0:
+            logging.warning("empty data, project {}".format(ret.iid))
+            return ret
         Convertor.json2db(data,ret,"id","oid")
-        Convertor.json2db(data,ret,"type","event_type")
-        Convertor.json2db(data,ret,"created_at")
-        if "actor" in data and data["actor"]:
-            ret.author = data["actor"]["login"]
-        data["author"]={"username":data["actor"]["login"]}
-        if "payload" in data and data["payload"]:
-            if "commits" in data["payload"] and data["payload"]["commits"]:
-                ret.description = "commits_size={};author_email={};author_name={}".format(
-                    data["payload"]["size"],data["payload"]["commits"][0]["author"]["email"],data["payload"]["commits"][0]["author"]["name"])
+        Convertor.json2db(data,ret,"key","id")
+        subdata = data["fields"]
+        Convertor.json2db(subdata,ret,"created","created_at")
+        Convertor.json2db(subdata,ret,"updated","updated_at")
+        Convertor.json2db(subdata,ret,"summary")
+        Convertor.json2db(subdata,ret,"description")
+
+        ret.issuetype = data["fields"]["issuetype"]["name"]
+        ret.author_name = data["fields"]["creator"]["name"]
+        ret.author_email = data["fields"]["creator"]["emailAddress"]
+
         return ret
-
-    @staticmethod
-    def from_gitlab(data):
-        data["created_at"] = datetime.datetime.strptime(data["created_at"][:19], "%Y-%m-%dT%H:%M:%S")
-        return Event(data)
-
-def safe_value(data,json_path,db_field):
-    if json_path in data and data[json_path]:
-        return data[json_path][:60]
-    return None
 
 class Developer(Base):
     __tablename__ = 'developer'
@@ -281,106 +161,6 @@ class Developer(Base):
     def from_gitlab(data):
         ret = Developer()
         ret.oid,ret.username,ret.name = data["id"],data["username"],data["name"]
-        return ret
-        
-class Pull(Base):
-    __tablename__ = 'pull'
-    iid = Column(Integer, primary_key=True)
-    oid = Column(Integer)
-    project = Column(String(64))
-    state = Column(String(64))
-    title = Column(String(512))
-    user = Column(String(64))
-    head = Column(String(512))
-    base = Column(String(512))
-    created_at = Column(DateTime)
-    updated_at = Column(DateTime)
-    site = Column(Integer)
-    
-    def from_github(data,ret = None):
-        if ret is None:
-            ret = Pull()
-        Convertor.json2db(data,ret,"state")
-        Convertor.json2db(data,ret,"title")
-        Convertor.json2db(data,ret,"created_at")
-        Convertor.json2db(data,ret,"updated_at")
-        if "user" in data and data["user"]:
-            ret.user = data["user"]["login"]
-        if "head" in data and data["head"]:
-            ret.head = data["head"]["sha"]
-        if "base" in data and data["base"]:
-            ret.base = data["base"]["sha"]
-        return ret
-
-    def from_gitlab(data,ret = None):
-        if ret is None:
-            ret = Pull()
-        Convertor.json2db(data,ret,"state")
-        Convertor.json2db(data,ret,"title")
-        Convertor.json2db(data,ret,"created_at")
-        Convertor.json2db(data,ret,"updated_at")
-        if "author" in data and data["author"]:
-            ret.user = data["author"]["username"]
-        return ret
-
-class Branch(Base):
-    __tablename__ = 'project_branch'
-    iid = Column(Integer, primary_key=True)
-    oid = Column(Integer)
-    site = Column(Integer)
-    project_oid = Column(Integer)
-    project = Column(String(64))
-    created_at = Column(DateTime)
-    name = Column(String(64))
-    protected = Column(Boolean)
-
-    def from_github(data,ret = None):
-        if ret is None:
-            ret = Branch()
-        Convertor.json2db(data,ret,"name")
-        Convertor.json2db(data,ret,"protected")
-        return ret
-
-class Tag(Base):
-    __tablename__ = 'tag'
-    iid = Column(Integer, primary_key=True)
-    oid = Column(Integer)
-    site = Column(Integer)
-    project_oid = Column(Integer)
-    project = Column(String(64))
-    created_at = Column(DateTime)
-    name = Column(String(64))
-    commit = Column(String(64))
-
-    def from_github(data,ret = None):
-        if ret is None:
-            ret = Tag()
-        Convertor.json2db(data,ret,"name")
-        if "commit" in data and data["commit"]:
-            ret.commit = data["commit"]["sha"]
-        return ret
-
-class Release(Base):
-    __tablename__ = 'project_release'
-    iid = Column(Integer, primary_key=True)
-    oid = Column(Integer)
-    project = Column(String(64))
-    project_oid = Column(Integer)
-    created_at = Column(DateTime)
-    name = Column(String(64))
-    tag = Column(String(64))
-
-    def from_github(data,ret = None):
-        if ret is None:
-            ret = Release()
-        Convertor.json2db(data,ret,"id","oid")
-        Convertor.json2db(data,ret,"name")
-        Convertor.json2db(data,ret,"tag_name","tag")
-        Convertor.json2db(data,ret,"created_at")
-        if "author" in data and data["author"]:
-            ret.author = data["author"]["login"]
-        else:
-            logging.info("missing author")
         return ret
 
 class Contributor(Base):
@@ -429,9 +209,8 @@ class Injector:
         DBSession = sessionmaker(bind = self.engine)
         self.db_session = DBSession()
         Convertor.load_schema(Project())
-        Convertor.load_schema(Tag())
-        Convertor.load_schema(Release())
         Convertor.load_schema(Developer())
+        Convertor.load_schema(Issue())
     
     def insert_data(self,data):
         for i in data:

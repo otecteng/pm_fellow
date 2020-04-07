@@ -39,7 +39,7 @@ class CrawlerClient:
         return last_value in values
         
     def getResource(self,url,limit = None, page = None, recordsPerPage = None, last = None, retry = True, data_path = None):
-        _page,_recordsPerPage = 1, self.recordsPerPage
+        _page,_recordsPerPage = 0, self.recordsPerPage
         _last_field = None
         if page is not None:
             _page = page
@@ -52,7 +52,7 @@ class CrawlerClient:
             _last_field = _last_field.split('/')
         data = []
         while True:
-            query = self.site.url + url + "&page={}&per_page={}".format(_page,_recordsPerPage)
+            query = self.site.url + url + "&startAt={}&maxResults={}".format(_page*_recordsPerPage,_recordsPerPage)
             logging.info(query)
             try:
                 response = self.session.get(url = query, timeout = 20)

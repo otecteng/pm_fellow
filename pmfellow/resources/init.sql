@@ -22,64 +22,24 @@ CREATE TABLE IF NOT EXISTS `project`
   commits         Integer
 )CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
-CREATE TABLE IF NOT EXISTS `commit`
+CREATE TABLE IF NOT EXISTS `issue`
 (
-  iid     BIGINT PRIMARY KEY AUTO_INCREMENT,    
+  iid     BIGINT PRIMARY KEY AUTO_INCREMENT,
+  oid     BIGINT,  
   id      VARCHAR(64),
   project  VARCHAR(128),
-  message  VARCHAR(1024),
-  created_at    DATETIME,
+  site Integer,
+  project_oid Integer,  
+  issuetype VARCHAR(64),
   author_name   VARCHAR(64),
   author_email  VARCHAR(64),
-  additions Integer,
-  deletions Integer,
-  total Integer,
-  issue  VARCHAR(64),
-  site Integer,
-  project_oid Integer,
-  oid Integer,
-  style_checked BOOLEAN
-)CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-
-CREATE TABLE IF NOT EXISTS `commit_file`
-(
-  iid     BIGINT PRIMARY KEY AUTO_INCREMENT,
-  id      VARCHAR(64),
-  commit_iid Integer,
-  commit_id  VARCHAR(64),
-  filename  VARCHAR(256),
-  status  VARCHAR(1024),
-  additions    Integer,
-  deletions   Integer,
-  changes  Integer
-)CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-
-CREATE TABLE IF NOT EXISTS `pull`
-(
-  iid     BIGINT PRIMARY KEY AUTO_INCREMENT,
-  oid     BIGINT,
-  project      VARCHAR(64),
+  summary  VARCHAR(512),
+  description  VARCHAR(1024),
   created_at    DATETIME,
-  updated_at    DATETIME,
-  state  VARCHAR(64),
-  title  VARCHAR(512),
-  user  VARCHAR(64),
-  head  VARCHAR(64),
-  base  VARCHAR(64)
+  updated_at    DATETIME
 )CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 
-CREATE TABLE IF NOT EXISTS `tag`
-(
-  iid     BIGINT PRIMARY KEY AUTO_INCREMENT,
-  oid     BIGINT,
-  project      VARCHAR(64),
-  project_oid    BIGINT,  
-  site    BIGINT,  
-  created_at    DATETIME,
-  updated_at    DATETIME,
-  name  VARCHAR(64),
-  commit  VARCHAR(64)
-)CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+
 
 CREATE TABLE IF NOT EXISTS `project_release`
 (

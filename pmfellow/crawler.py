@@ -6,7 +6,7 @@ import gevent
 from sqlalchemy.orm.query import Query
 from pmfellow.jira_client import JiraClient
 from pmfellow.parser import Parser
-from pmfellow.injector import Developer,Tag,Release,Commit,Project,Contributor,Event,Pull,Branch
+from pmfellow.injector import Developer,Issue,Project,Contributor
 from pmfellow.decorator import log_time
 
 
@@ -109,82 +109,22 @@ class Crawler:
         self.injector.insert_data(contribution_items)
         
     @log_time
-    def import_commits(self,projects = None,limit = None, until = None):
+    def import_issues(self,projects = None,limit = None, until = None):
         projects = self.get_default_projects(projects)
 
         for idx,i in enumerate(projects):
-            last_commit = self.injector.get_project_last_commit(i.path)
-            if last_commit is not None:
-                commits = self.client.get_project_commits(i, since = last_commit.created_at + datetime.timedelta(seconds=1), until_date = until, limit = limit)
+            last = None # self.injector.get_project_last_issue(i.path)
+            if last is not None:
+                issues = self.client.get_project_issues(i, since = last.created_at + datetime.timedelta(seconds=1), until_date = until, limit = limit)
             else:
-                commits = self.client.get_project_commits(i,until_date = until,limit = limit)
-            new_commits = Parser.json_to_db(commits, Commit,format=self.site.server_type, project=i, site=self.site)
-            self.injector.insert_data(new_commits)
+                issues = self.client.get_project_issues(i,until_date = until,limit = limit)
+            new_issues = Parser.json_to_db(issues, Issue, format=self.site.server_type, project=i, site=self.site)
+            self.injector.insert_data(new_issues)
             logging.info("[{}/{}]imported:{}".format(idx,len(projects),i.path))
         return
 
     def stat_commit(self,commit):
         return (commit,self.client.get_commit(commit.project,commit.id))
-
-    @log_time
-    def stat_commits(self,projects = None,limit = None):
-        projects = self.get_default_projects(projects)
-
-        for idx,i in enumerate(projects):
-            commits = self.injector.get_commits(project =i).all()
-            for paged_objs in self.page_objects(commits,100):
-                data = self.execute_parallel(self.stat_commit,paged_objs)
-                [x.load_github_stat(data[x]) for x in data]
-            self.injector.db_commit()
-            logging.info("[{}/{}]imported:{}".format(idx,len(projects),i.path))
-        return
-
-    @log_time
-    def get_tags(self,projects = None, with_commits = False):
-        projects = self.get_default_projects(projects)
-        
-        commits = []
-        for i in projects:
-            tags = self.client.get_tags(i)
-            logging.info("{} new tag number {}".format(i.path,len(tags)))
-            tags = Parser.json_to_db(tags,Tag,site = self.site)
-            for x in tags:
-                x.project_oid = i.oid
-                x.project = i.path
-                if with_commits:
-                    commits.append((i.path,x.commit))
-            self.injector.insert_data(tags)
-            logging.info("check your tags for duplicated commits")
-
-    @log_time
-    def import_releases(self,projects = None):
-        projects = self.get_default_projects(projects)
-
-        ret = []
-        for i in projects:
-            data = self.client.get_releases(i)
-            logging.info("{} new release number {}".format(i.path,len(data)))
-            data = Parser.json_to_db(data,Release,site = self.site)
-            for j in data:
-                j.project = i.path
-                j.project_oid = i.oid
-                ret = ret + data
-        self.injector.insert_data(ret)
-        return ret
-
-    @log_time
-    def import_branches(self,projects = None):
-        projects = self.get_default_projects(projects)
-        ret = []
-        for i in projects:
-            data = self.client.get_branches(i)
-            data = Parser.json_to_db(data,Branch,site = self.site)
-            for j in data:
-                j.project = i.path
-                j.project_oid = i.oid
-                ret = ret + data
-        self.injector.insert_data(ret)
-        return ret
 
     @log_time
     def import_users(self):

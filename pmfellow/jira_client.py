@@ -16,8 +16,8 @@ class JiraClient(CrawlerClient):
     def get_projects(self, start_from = None, private = False):
         return self.getSingleResource("/rest/api/2/project?")
 
-    def get_project_commits(self, project, limit = None, since = None, until_date = None):
-        return self.getResource("/api/v4/projects/{}/repository/commits?".format(project.oid),limit = limit)
+    def get_project_issues(self, project, limit = None, since = None, until_date = None):
+        return self.getResource("/rest/api/2/search?jql=project={}&fields=created,updated,issuetype,creator,summary,description".format(project.path),limit = limit,data_path="issues")
 
     def getCommit(self,project,commit):
         return self.getSingleResource("/api/v4/projects/{}/repository/commits/{}".format(project,commit))

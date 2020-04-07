@@ -3,7 +3,7 @@ import mysql.connector
 import logging
 
 class RepoMySQL:
-    def init_db(self, root_password, host = "localhost", fellow_db = "repo_fellow", fellow_user = "repo", fellow_password = "fellow"):
+    def init_db(self, root_password, host = "localhost", fellow_db = "pm_fellow", fellow_user = "pm", fellow_password = "fellow"):
         logging.info("create database on {}".format(host))
         logging.info("new database: user={} database={}".format(fellow_user,fellow_db))
 
