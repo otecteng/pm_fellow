@@ -1,13 +1,33 @@
+import os
 import json
 import pmfellow.organization
 from pmfellow.crawler_client import CrawlerClient
-import json
 import base64
+from oauthlib.oauth1 import SIGNATURE_RSA
+from requests_oauthlib import OAuth1
+
+class JiraClientFactory:
+    @classmethod
+    def create_oauth_client(cls,site):
+        with open(site.token)) as json_file:
+            oauth = json.load(json_file)
+            site.set_oauth(oauth)
+            client = JiraClient(site)            
+            return client 
+
+# requests.get(all_project_url,headers=jira_headers,auth=headeroauth)
+    @classmethod
+    def create_basic_client(cls,site):
+        return JiraClient(site)
 
 class JiraClient(CrawlerClient):
     def __init__(self,site,data_path = "./data"):
         super(JiraClient, self).__init__(site,data_path)
-        self.session.headers.update({"Authorization":"Basic {}".format(base64.b64encode((self.site.user +":"+ self.site.token).encode('utf-8')).decode())})
+        if self.site.user != "oauth":
+            self.session.headers.update({"Authorization":"Basic {}".format(base64.b64encode((self.site.user +":"+ self.site.token).encode('utf-8')).decode())})
+        else:
+            self.headeroauth = OAuth1(self.site.CONSUMER_KEY, client_secret=self.site.CONSUMER_SECRET,resource_owner_key=self.site.ACCESS_TOKEN, resource_owner_secret=self.site.ACCESS_SECRET, signature_method=self.site.SIGNATURE_RSA,rsa_key=self.site.RSA_KEY, signature_type='auth_header')
+        
         # self.session.headers.update({"PRIVATE-TOKEN":"{}".format(self.token)})
     
     def getProjects(self,limit = None):

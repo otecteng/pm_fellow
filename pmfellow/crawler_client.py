@@ -18,7 +18,7 @@ class CrawlerClient:
         logging.info(query)
         while True:
             try:
-                response = self.session.get(url = query, timeout = 20)                                
+                response = self.session.get(url = query, timeout = 20)
                 if response.status_code > 300:
                     logging.info("Error {} to open {}".format(response.status_code,query))
                 break

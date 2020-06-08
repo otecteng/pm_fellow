@@ -1,6 +1,7 @@
 .vscode/
 __pycache__/
 build/
+oauth/
 dist/
 *.egg-info/
 *.csv
@@ -11,5 +12,5 @@ doc/
 env/
 infrastructure/
 kanban/*.py
-
+*.zip
 

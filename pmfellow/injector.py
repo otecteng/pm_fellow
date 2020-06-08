@@ -61,8 +61,16 @@ class Site(Base):
     user = Column(String(64))
     token = Column(String(64))
     created_at = Column(DateTime)
+    
     def __str__(self):
         return "{}\t{}\t{}\t{}\t{}".format(self.iid,self.name,self.server_type,self.url,self.created_at)
+
+    def set_oauth(self,oauth):
+        self.CONSUMER_KEY = oauth['consumer_key']
+        self.CONSUMER_SECRET = oauth['consumer_secret']
+        self.ACCESS_TOKEN = oauth['access_token']
+        self.ACCESS_SECRET = oauth['access_token_secret']
+        self.RSA_KEY = oauth['key_cert']
 
 class Group(Base):
     __tablename__ = 'developer_group'
