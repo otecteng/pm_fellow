@@ -4,7 +4,7 @@ import datetime
 from gevent import monkey; monkey.patch_all()
 import gevent
 from sqlalchemy.orm.query import Query
-from pmfellow.jira_client import JiraClient
+from pmfellow.jira_client import JiraClientFactory,JiraClient
 from pmfellow.parser import Parser
 from pmfellow.injector import Developer,Issue,Project,Contributor
 from pmfellow.decorator import log_time
@@ -15,7 +15,10 @@ class Crawler:
     @staticmethod
     def create_client(site):
         if site.server_type == "jira":
-            return JiraClient(site)
+            if site.user == "oauth":
+                return JiraClientFactory.create_oauth_client(site)
+            else:
+                return JiraClientFactory.create_basic_client(site)
         return None
 
     def __init__(self,site,injector = None):

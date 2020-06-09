@@ -70,7 +70,8 @@ class Site(Base):
         self.CONSUMER_SECRET = oauth['consumer_secret']
         self.ACCESS_TOKEN = oauth['access_token']
         self.ACCESS_SECRET = oauth['access_token_secret']
-        self.RSA_KEY = oauth['key_cert']
+        with open(oauth['key_cert']) as f:
+            self.RSA_KEY = f.read()
 
 class Group(Base):
     __tablename__ = 'developer_group'
@@ -130,8 +131,12 @@ class Issue(Base):
         Convertor.json2db(subdata,ret,"description")
 
         ret.issuetype = data["fields"]["issuetype"]["name"]
-        ret.author_name = data["fields"]["creator"]["name"]
-        ret.author_email = data["fields"]["creator"]["emailAddress"]
+        if "creator" in data["fields"] and data["fields"]["creator"] is not None:
+            if "displayName" in data["fields"]["creator"]:
+                ret.author_name = data["fields"]["creator"]["displayName"]
+            else:
+                ret.author_name = data["fields"]["creator"]["name"]
+                ret.author_email = data["fields"]["creator"]["emailAddress"]
 
         return ret
 
@@ -261,21 +266,16 @@ class Injector:
             return self.db_session.query(type).filter(filter).all()
         return self.db_session.query(type).all()
 
-    def get_commits(self,project = None):
-        if project:
-            return self.db_session.query(Commit).filter(Commit.project == project.path)
-        else:
-            return self.db_session.query(Commit)
-
-    def get_project_last_commit(self,path):
-        return self.db_session.query(Commit).filter(Commit.project == path).order_by(Commit.created_at.desc()).first()
-
     def db_commit(self):
         self.db_session.commit()
 
     def add_site(self,site_url):
         # http://user:password@url?name&type
         args = re.split(":|#|@|\?|&",site_url)
+        if len(args) == 7: # user includes @
+            args[1] = args[1] + "@" + args[2]
+            for i in range(2,6):
+                args[i] = args[i+1]
         site = Site()
         site.name,site.user,site.token,site.url,site.server_type = args[4],args[1][2:],args[2],"{}://{}".format(args[0],args[3]),args[5]
         self.db_session.add(site)

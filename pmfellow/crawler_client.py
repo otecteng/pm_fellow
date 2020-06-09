@@ -12,10 +12,12 @@ class CrawlerClient:
         self.session = HTMLSession()
         self.data_path = data_path
         self.recordsPerPage = 100
+        self.auth = None
 
     def getSingleResource(self,url,retry = True):
         query = self.site.url + url 
         logging.info(query)
+
         while True:
             try:
                 response = self.session.get(url = query, timeout = 20)
@@ -24,7 +26,7 @@ class CrawlerClient:
                 break
             except Exception as ex:
                 logging.info("retry {}".format(query))
-                time.sleep(2)                
+                time.sleep(2)
                 continue
         return response.json()
 
@@ -55,7 +57,7 @@ class CrawlerClient:
             query = self.site.url + url + "&startAt={}&maxResults={}".format(_page*_recordsPerPage,_recordsPerPage)
             logging.info(query)
             try:
-                response = self.session.get(url = query, timeout = 20)
+                response = self.session.get(url = query, timeout = 20)                    
                 if response.status_code > 300:
                     logging.error("failed {} to open {}".format(response.status_code,query))
                     break                

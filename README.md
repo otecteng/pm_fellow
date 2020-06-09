@@ -32,28 +32,23 @@ pmfellow group import --site=site_iid
 1.5 get site projects  
 ```
 nohup pmfellow project import --site=site_iid &
-pmfellow project import --site=site_iid --private
+pmfellow project import --site=site_iid
 ```
 
-1.6 get project size and statistic  
+1.6 get project issues  
 ```
-pmfellow project update --site=site_iid
-pmfellow project contributor --site=site_iid --since=iid
-pmfellow project stat --site=site_iid --since=iid
-pmfellow project commits --site=site_iid --since=iid
+pmfellow issue import --site=site_iid [--since=iid] [--project=project_iid] 
+```
 
+# JIRA SaaS User  
+## How to generate a api-token  
 ```
-update: get size,pushed date  
-stat: get weekly commit count of previos year  
-commits: get total commits pages of project  
+https://id.atlassian.com/manage-profile/security/api-tokens
+```
 
-1.7 get project commits  
+## How to generate OAuth2 token
 ```
-pmfellow commit import --site=site_iid [--since=iid] [--project=project_iid] [--limit=200]
-pmfellow tag import --site=site_iid [--since=iid]
-pmfellow release import --site=site_iid [--since=iid]
-pmfellow branch import --site=site_iid [--since=iid]
-pmfellow commit style --site=site_iid --since=iid --style="(.*)#(.*)\s+(.*):\s+(.*?)"
+JiraClientFactory.oauth_jira(cls,server,app_key,rsa)
 ```
 
 # Develop  
@@ -92,5 +87,4 @@ sudo ln -s /usr/bin/python3.7 /usr/bin/python3
 sudo apt-get install python3.7-gdbm
 sudo apt install python3-pip
 pip3 install wheel
-
 ```
