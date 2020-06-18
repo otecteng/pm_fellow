@@ -151,30 +151,24 @@ class Developer(Base):
     repo_count = Column(Integer)
     created_at = Column(DateTime)
 
-    @staticmethod
-    def from_github(data, obj = None):
-        ret = Developer()
-        if obj:
-            ret = obj
-        if "repositories" in data:
-            ret.username = data["login"]
-            ret.name = data["name"]
-            ret.location = data["location"]
-            if data["repositories"]:
-                ret.repo_count = data["repositories"]["totalCount"]
-        else:
-            Convertor.json2db(data,ret,"id","oid")
-            Convertor.json2db(data,ret,"username","login")
-            Convertor.json2db(data,ret,"name")
-            Convertor.json2db(data,ret,"email")
-            Convertor.json2db(data,ret,"created_at")
-        return ret
+class Board(Base):
+    __tablename__ = 'board'
+    iid = Column(Integer, primary_key=True)
+    oid = Column(Integer)
+    site = Column(Integer)
+    name = Column(String(64))
 
     @staticmethod
-    def from_gitlab(data):
-        ret = Developer()
-        ret.oid,ret.username,ret.name = data["id"],data["username"],data["name"]
+    def from_jira(data,ret = None):
+        if ret is None:
+            ret = Board()
+        Convertor.json2db(data,ret,"name")
+        Convertor.json2db(data,ret,"id","oid")
         return ret
+
+    def __str__(self):
+        return "{} {}".format(self.oid,self.name)
+
 
 class Contributor(Base):
     __tablename__ = 'contributor'
@@ -249,12 +243,6 @@ class Injector:
             ret = ret.filter(Developer.site == site)
         return ret.all()
 
-    def get_contributors(self,site,filter = None):
-        if filter:
-            print(filter)
-            return self.db_session.query(Contributor).filter(Contributor.site == site.iid).filter(Contributor.project.like("%{}%".format(filter))).all()    
-        return self.db_session.query(Contributor).filter(Contributor.site == site.iid).all()
-
     def get_project(self,path):
         return self.db_session.query(Project).filter(Project.path == path).first()
 
@@ -284,3 +272,6 @@ class Injector:
 
     def get_sites(self):
         return self.db_session.query(Site)
+
+    def get_issues(self,site,project):
+        return self.db_session.query(Issue).filter(Issue.site == site,Issue.project == project)

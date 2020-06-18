@@ -3,10 +3,11 @@
 Usage:
     pmfellow db <command> --conn=<str> [--fellow_db=<str>] [--fellow_db=<str>] [--fellow_password=<str>] [--logging=<debug>]
     pmfellow site <command> [<args>]
-    pmfellow project <command> [--site=<id>] [--since=<id>] [--private] [--projects=<filter>] [--logging=<debug>]
+    pmfellow project <command> [--site=<id>] [--since=<id>] [--private] [--project=<id>] [--projects=<filter>] [--logging=<debug>]
     pmfellow user <command> [--site=<id>] [--since=<id>] [--until=<id>] [--logging=<debug>]
-    pmfellow group <command> [--site=<id>] [<args>]       
+    pmfellow group <command> [--site=<id>] [<args>]
     pmfellow issue <command> [--site=<id>] [--project=<id>] [--since=<id>] [--limit=<n>] [--until=<date>] [--style=<str>] [--logging=<debug>]
+    pmfellow board <command> [--site=<id>] [<args>]
 
 Options: 
     -h,--help 
@@ -53,10 +54,10 @@ def parse_projects_args(arguments,injector):
     if arguments["--project"]:
         return [injector.get_obj(Project,arguments["--project"])]
     if arguments["--since"]:
-        return injector.get_projects( site = arguments["--site"],since = arguments["--since"])
+        return injector.get_projects( site = arguments["--site"],since = arguments["--since"]).all()
     if arguments["--site"] is None:
         logging.error("site or project must be assiged")
-    return injector.get_projects( site = arguments["--site"] )
+    return injector.get_projects( site = arguments["--site"] ).all()
 
 def main():
     arguments = docopt(__doc__, version = 'Repo Fellow')
@@ -93,13 +94,9 @@ def main():
             data = Crawler(site,injector).import_projects(arguments["--private"])
             logging.info("total imported projects {}".format(len(data)))
             return
-        projects = parse_projects_args(arguments,injector).all()
-        if command == "update":
-            data = Crawler(site,injector).update_projects(projects)
+        projects = parse_projects_args(arguments,injector)
         if command == "stat":
             data = Crawler(site,injector).stat_projects(projects)
-        if command == "commits":
-            data = Crawler(site,injector).commits_projects(projects)            
         if command == "contributor":
             data = Crawler(site,injector).contributor_projects(projects)
             
@@ -121,6 +118,11 @@ def main():
             data = Crawler(site,injector).detail_users(since = arguments["--since"],until = arguments["--until"])
             return
 
+    if arguments["board"]:
+        if command == "import":
+            data = Crawler(site,injector).import_boards()
+        return
+
     projects = parse_projects_args(arguments,injector)
 
     if arguments["issue"]:
@@ -130,6 +132,12 @@ def main():
                 until_date = datetime.datetime.strptime(arguments["--until"], "%Y-%m-%d")
             logging.info("importing issues of {} from ".format(site.name,until_date))
             Crawler(site,injector).import_issues(projects,limit = arguments["--limit"], until = until_date)
+            return
+        # pmfellow issue <command> [--site=<id>] [--project=<id>]
+        if command == "log":
+            for i in projects:
+                logging.info("importing issue changes of {} from {}".format(site.name,i.path))
+                Crawler(site,injector).import_changes(i)
             return
 
     if arguments["group"]:

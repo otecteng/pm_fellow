@@ -46,8 +46,6 @@ class JiraClientFactory:
                             signature_method=SIGNATURE_RSA, rsa_key=RSA_KEY) 
         access_token = oauth.fetch_access_token(ACCESS_TOKEN_URL)
         print(access_token)
- 
-
 
 class JiraClient(CrawlerClient):
     def __init__(self,site,data_path = "./data"):
@@ -69,4 +67,29 @@ class JiraClient(CrawlerClient):
     def get_releases(self,project):
         return self.getResource("/api/v4/projects/{}/releases?".format(project))
 
+    def get_boards(self):
+        return self.getSingleResource("/rest/greenhopper/latest/rapidviews/list")
+
+    def get_board_config(self,board):
+        return self.getSingleResource("/rest/agile/latest/board/{}/configuration".format(board))
+
+    
+    def get_issue_changelog(self,issue):
+        ret = self.getSingleResource("/rest/agile/1.0/issue/{}?expand=changelog".format(issue))
+        if "changelog" not in ret:
+            return {"issue":issue,"logs":[]}
+        changelogs = []
+        for i in ret["changelog"]["histories"]:
+            status = []
+            for j in i["items"]:
+                if j["field"] == "status":
+                    status.append("{},{}".format(j["fromString"],j["toString"]))
+                    changelogs.append("{},{}".format(i["created"],",".join(status)))
+        return {"issue":issue,"logs":changelogs}
+
+    def get_project_workflow_steps(self,project):
+        schema = self.getSingleResource("/rest/projectconfig/1/workflowscheme/{}".format(project.path))
+        workflow = self.getSingleResource("/rest/api/2/workflowscheme/{}/workflow".format(schema["id"]))
+        # for i in workflow:
+        #     i["steps"] = self.query("/rest/projectconfig/1/workflow?workflowName={}".format(i["workflow"]))["sources"]
 

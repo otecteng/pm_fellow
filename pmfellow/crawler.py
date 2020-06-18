@@ -6,9 +6,9 @@ import gevent
 from sqlalchemy.orm.query import Query
 from pmfellow.jira_client import JiraClientFactory,JiraClient
 from pmfellow.parser import Parser
-from pmfellow.injector import Developer,Issue,Project,Contributor
+from pmfellow.injector import Developer,Issue,Project,Contributor,Board
 from pmfellow.decorator import log_time
-
+import json
 
 
 class Crawler:
@@ -59,57 +59,6 @@ class Crawler:
             i.site = self.site.iid
         self.injector.insert_data(projects)
         return projects
-
-    def get_project(self,project):
-        return (project,self.client.get_project(project))
-
-    @log_time
-    def update_projects(self,projects = None):
-        projects = self.get_default_projects(projects)
-
-        for paged_objs in self.page_objects(projects,100):
-            data = self.execute_parallel(self.get_project,paged_objs)
-            [Project.from_github(data[i],i) for i in data]    
-        self.injector.db_commit()
-
-    def get_project_statistic(self,project):
-        return (project,self.client.get_project_statistic(project))
-
-    @log_time
-    def stat_projects(self,projects = None):
-        projects = self.get_default_projects(projects)
-
-        for paged_objs in self.page_objects(projects,100):
-            data = self.execute_parallel(self.get_project_statistic,paged_objs)
-            [Project.statistic_github(data[i],i) for i in data]
-        self.injector.db_commit()
-
-    def updated_project_commits(self,project):
-        return (project,self.client.get_commit_pages(project))
-
-    @log_time
-    def commits_projects(self,projects = None):
-        projects = self.get_default_projects(projects)
-
-        for paged_objs in self.page_objects(projects,100):
-            data = self.execute_parallel(self.updated_project_commits,paged_objs)
-            for project in data:
-                project.commits = data[project] * self.client.recordsPerPage
-        self.injector.db_commit()
-
-    @log_time
-    def contributor_projects(self,projects = None):
-        projects = self.get_default_projects(projects)
-        contribution_items = []
-        for paged_objs in self.page_objects(projects,100):
-            data = self.execute_parallel(lambda x:(x,self.client.get_contributors(x)),paged_objs)
-            if self.site.server_type == "github":
-                for i in data:
-                    contribution_items = contribution_items + Contributor.from_github(data[i],i)
-            if self.site.server_type == "gitee":
-                for i in data:
-                    contribution_items = contribution_items + Contributor.from_gitee(data[i],i)
-        self.injector.insert_data(contribution_items)
         
     @log_time
     def import_issues(self,projects = None,limit = None, until = None):
@@ -126,8 +75,24 @@ class Crawler:
             logging.info("[{}/{}]imported:{}".format(idx,len(projects),i.path))
         return
 
-    def stat_commit(self,commit):
-        return (commit,self.client.get_commit(commit.project,commit.id))
+    @log_time
+    def import_changes(self, project, limit = None, until = None):
+        issues = self.injector.get_issues(site = self.site.iid, project = project.path )
+        changes = []
+        for i in issues:
+            changes.append(self.client.get_issue_changelog(i.oid))
+        with open("{}.json".format(project.path),"w") as outfile:
+            json.dump(changes, outfile)
+        return
+
+
+    @log_time
+    def import_boards(self):
+        boards = Parser.json_to_db(self.client.get_boards()["views"],Board,site=self.site)
+        for i in boards:
+            columns = self.client.get_board_config(i.oid)["columnConfig"]["columns"]
+            print(i.name  + ":" + ",".join(list(map(lambda  x : x["name"],columns))))
+        
 
     @log_time
     def import_users(self):
@@ -147,23 +112,3 @@ class Crawler:
         self.injector.db_commit()
         return users
 
-    @log_time
-    def import_events(self,projects = None,limit = None):
-        projects = self.get_default_projects(projects)
-        for idx,i in enumerate(projects):
-            data = self.client.get_project_events(i)
-            new_events = Parser.json_to_db(data, Event,format=self.site.server_type, project=i, site=self.site)
-            self.injector.insert_data(new_events)
-            self.injector.db_commit()
-            logging.info("[{}/{}]imported:{}".format(idx,len(projects),i.path))
-        return
-
-    @log_time
-    def import_pull_requests(self,projects = None,limit = None, until = None):
-        projects = self.get_default_projects(projects)
-        for idx,i in enumerate(projects):
-            data = self.client.get_pull_requests(i)
-            new_prs = Parser.json_to_db(data, Pull,format=self.site.server_type, project=i, site=self.site)
-            self.injector.insert_data(new_prs)
-            logging.info("[{}/{}]imported:{}".format(idx,len(projects),i.path))
-        return
