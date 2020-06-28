@@ -59,7 +59,7 @@ class JiraClient(CrawlerClient):
         return self.getSingleResource("/rest/api/2/project?")
 
     def get_project_issues(self, project, limit = None, since = None, until_date = None):
-        return self.getResource("/rest/api/2/search?jql=project={}&fields=created,updated,issuetype,creator,summary,description".format(project.path),limit = limit,data_path="issues")
+        return self.getResource("/rest/api/2/search?jql=project={}&fields=created,updated,issuetype,creator,status,summary,description".format(project.path),limit = limit,data_path="issues")
 
     def get_users(self,since = ""):
         return self.getResource("/api/v4/users?")

@@ -108,6 +108,7 @@ class Issue(Base):
     author_name = Column(String(64))
     author_email = Column(String(64))
     summary = Column(String(512))
+    status = Column(String(64))
     description = Column(String(1024))
     created_at = Column(DateTime)
     updated_at = Column(DateTime)
@@ -131,6 +132,7 @@ class Issue(Base):
         Convertor.json2db(subdata,ret,"description")
 
         ret.issuetype = data["fields"]["issuetype"]["name"]
+        ret.status = data["fields"]["status"]["name"]
         if "creator" in data["fields"] and data["fields"]["creator"] is not None:
             if "displayName" in data["fields"]["creator"]:
                 ret.author_name = data["fields"]["creator"]["displayName"]

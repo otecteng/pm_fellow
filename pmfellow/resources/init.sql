@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS `issue`
   issuetype VARCHAR(64),
   author_name   VARCHAR(64),
   author_email  VARCHAR(64),
+  status VARCHAR(64),
   summary  VARCHAR(512),
   description  VARCHAR(1024),
   created_at    DATETIME,
