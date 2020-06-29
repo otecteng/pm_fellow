@@ -94,11 +94,6 @@ def main():
             data = Crawler(site,injector).import_projects(arguments["--private"])
             logging.info("total imported projects {}".format(len(data)))
             return
-        projects = parse_projects_args(arguments,injector)
-        if command == "stat":
-            data = Crawler(site,injector).stat_projects(projects)
-        if command == "contributor":
-            data = Crawler(site,injector).contributor_projects(projects)
             
     if arguments["site"]:
         if command == "add":

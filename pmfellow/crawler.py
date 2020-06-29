@@ -77,11 +77,23 @@ class Crawler:
 
     @log_time
     def import_boards(self):
-        boards = Parser.json_to_db(self.client.get_boards()["views"],Board,site=self.site)
-        for i in boards:
-            columns = self.client.get_board_config(i.oid)["columnConfig"]["columns"]
-            print(i.name  + ":" + ",".join(list(map(lambda  x : x["name"],columns))))
-        
+        boards = []
+        for paged_objs in self.page_objects(Parser.json_to_db(self.client.get_boards()["views"],Board,site=self.site),100):
+            data = self.execute_parallel(lambda x:(x,self.client.get_board_config(x.oid)["columnConfig"]["columns"]),paged_objs)
+            for i in data:
+                boards.append({"oid":i.oid,"name":i.name,"columns":",".join(list(map(lambda  x : x["name"],data[i])))})
+        with open("board.json","w") as outfile:
+            json.dump(boards, outfile)
+
+        projects = []
+        for paged_objs in self.page_objects(Parser.json_to_db(self.client.get_boards()["views"],Board,site=self.site),100):
+            data = self.execute_parallel(lambda x:(x,self.client.get_board_projects(x.oid)),paged_objs)
+            for i in data:
+                projects.append({"oid":i.oid,"name":i.name,"projects":data[i]})
+        with open("board_projects.json","w") as outfile:
+            json.dump(projects, outfile)
+
+        return
 
     @log_time
     def import_users(self):

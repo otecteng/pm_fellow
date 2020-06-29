@@ -73,7 +73,10 @@ class JiraClient(CrawlerClient):
     def get_board_config(self,board):
         return self.getSingleResource("/rest/agile/latest/board/{}/configuration".format(board))
 
-    
+    def get_board_projects(self,board):
+        res = self.getSingleResource("/rest/agile/1.0/board/{}/project".format(board))["values"]
+        return list(map(lambda x:x["key"],res))
+
     def get_issue_changelog(self,issue):
         ret = self.getSingleResource("/rest/agile/1.0/issue/{}?expand=changelog".format(issue.oid))
         if "changelog" not in ret:
