@@ -41,7 +41,7 @@ from pmfellow.crawler import Crawler
 from pmfellow.injector import Injector,Site,Project
 from pmfellow.parser import Parser
 from pmfellow.repo_mysql import RepoMySQL
-
+from pmfellow.metric import Metric
 
 def get_arg(key,default_value = None, args = None):
     if key in os.environ:
@@ -128,11 +128,14 @@ def main():
             logging.info("importing issues of {} from ".format(site.name,until_date))
             Crawler(site,injector).import_issues(projects,limit = arguments["--limit"], until = until_date)
             return
-        # pmfellow issue <command> [--site=<id>] [--project=<id>]
         if command == "log":
             for i in projects:
                 logging.info("importing issue changes of {} from {}".format(site.name,i.path))
                 Crawler(site,injector).import_changes(i)
+            return
+        if command == "metric":
+            for i in projects:
+                Metric().leadtime(i.path)
             return
 
     if arguments["group"]:

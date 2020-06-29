@@ -66,14 +66,8 @@ pip3 install -r requirements.txt
 python3 -m pmfellow 
 ```
 
-## Build package  
-```
-python3 setup.py sdist bdist_wheel
-```
-## Deploy package  
-```
-pip3 install pmfellow.whl
-```
+## Docker image
+
 
 ## For ubuntu 16  
 ```

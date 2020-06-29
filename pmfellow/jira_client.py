@@ -88,7 +88,8 @@ class JiraClient(CrawlerClient):
                 if j["field"] == "status":
                     status.append("{},{}".format(j["fromString"],j["toString"]))
                     changelogs.append("{},{}".format(i["created"],",".join(status)))
-        return {"issue":issue.oid,"createdAt":str(issue.created_at),"logs":changelogs}
+        changelogs.reverse()
+        return {"issue":issue.oid,"created_at":str(issue.created_at),"logs":changelogs}
 
     def get_project_workflow_steps(self,project):
         schema = self.getSingleResource("/rest/projectconfig/1/workflowscheme/{}".format(project.path))
