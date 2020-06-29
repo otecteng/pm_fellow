@@ -107,7 +107,7 @@ class Crawler:
         logging.info(issues)
         changes = []
         for paged_objs in self.page_objects(issues,100):
-            data = self.execute_parallel(lambda x:(x,self.client.get_issue_changelog(x.oid)),paged_objs)
+            data = self.execute_parallel(lambda x:(x,self.client.get_issue_changelog(x)),paged_objs)
             changes.extend(data.values())
         with open("{}.json".format(project.path),"w") as outfile:
             json.dump(changes, outfile)

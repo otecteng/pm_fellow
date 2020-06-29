@@ -75,9 +75,9 @@ class JiraClient(CrawlerClient):
 
     
     def get_issue_changelog(self,issue):
-        ret = self.getSingleResource("/rest/agile/1.0/issue/{}?expand=changelog".format(issue))
+        ret = self.getSingleResource("/rest/agile/1.0/issue/{}?expand=changelog".format(issue.oid))
         if "changelog" not in ret:
-            return {"issue":issue,"logs":[]}
+            return {"issue":issue.oid,"logs":[]}
         changelogs = []
         for i in ret["changelog"]["histories"]:
             status = []
@@ -85,7 +85,7 @@ class JiraClient(CrawlerClient):
                 if j["field"] == "status":
                     status.append("{},{}".format(j["fromString"],j["toString"]))
                     changelogs.append("{},{}".format(i["created"],",".join(status)))
-        return {"issue":issue,"logs":changelogs}
+        return {"issue":issue.oid,"logs":changelogs}
 
     def get_project_workflow_steps(self,project):
         schema = self.getSingleResource("/rest/projectconfig/1/workflowscheme/{}".format(project.path))
