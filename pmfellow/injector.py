@@ -276,4 +276,4 @@ class Injector:
         return self.db_session.query(Site)
 
     def get_issues(self,site,project):
-        return self.db_session.query(Issue).filter(Issue.site == site,Issue.project == project)
+        return self.db_session.query(Issue).filter(Issue.site == site,Issue.project == project).all()

@@ -76,17 +76,6 @@ class Crawler:
         return
 
     @log_time
-    def import_changes(self, project, limit = None, until = None):
-        issues = self.injector.get_issues(site = self.site.iid, project = project.path )
-        changes = []
-        for i in issues:
-            changes.append(self.client.get_issue_changelog(i.oid))
-        with open("{}.json".format(project.path),"w") as outfile:
-            json.dump(changes, outfile)
-        return
-
-
-    @log_time
     def import_boards(self):
         boards = Parser.json_to_db(self.client.get_boards()["views"],Board,site=self.site)
         for i in boards:
@@ -112,3 +101,14 @@ class Crawler:
         self.injector.db_commit()
         return users
 
+    @log_time
+    def import_changes(self, project, limit = None, until = None):
+        issues = self.injector.get_issues(site = self.site.iid, project = project.path )
+        logging.info(issues)
+        changes = []
+        for paged_objs in self.page_objects(issues,100):
+            data = self.execute_parallel(lambda x:(x,self.client.get_issue_changelog(x.oid)),paged_objs)
+            changes.extend(data.values())
+        with open("{}.json".format(project.path),"w") as outfile:
+            json.dump(changes, outfile)
+        return
