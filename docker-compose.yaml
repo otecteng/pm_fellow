@@ -1,0 +1,28 @@
+version: '3.1'
+
+services:
+
+  db:
+    image: mysql:5.7
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    #restart: always
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./pmfellow/resources/init.sql:/docker-entrypoint-initdb.d/init.sql
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+    ports:
+      - "3306:3306"
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    links:
+      - db
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+volumes: 
+  db_data:
+  grafana_data:
