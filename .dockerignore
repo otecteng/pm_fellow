@@ -1,0 +1,7 @@
+build/
+infrastructure/
+data/
+oauth/
+test/
+*.csv
+*.json

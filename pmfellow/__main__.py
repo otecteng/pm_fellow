@@ -6,7 +6,8 @@ Usage:
     pmfellow project <command> [--site=<id>] [--since=<id>] [--private] [--project=<id>] [--projects=<filter>] [--logging=<debug>]
     pmfellow user <command> [--site=<id>] [--since=<id>] [--until=<id>] [--logging=<debug>]
     pmfellow group <command> [--site=<id>] [<args>]
-    pmfellow issue <command> [--site=<id>] [--project=<id>] [--since=<id>] [--limit=<n>] [--until=<date>] [--style=<str>] [--logging=<debug>]
+    pmfellow issue <command> [--site=<id>] [--project=<id>] [--since=<id>] [--limit=<n>] [--until=<date>] [--logging=<debug>]
+    pmfellow metric <command> [--site=<id>] [--project=<id>] [--status=<a,b>]
     pmfellow board <command> [--site=<id>] [<args>]
 
 Options: 
@@ -18,7 +19,7 @@ Options:
     --projects=<filter>  project path like filter
     --private       processing private projects
     --until=<date>   until date of commit
-    --style=<str>    commit message style check string
+    --status=<a,b>    story status of start and end
     --logging=<debug> logging level
 
 Example:
@@ -133,18 +134,12 @@ def main():
                 logging.info("importing issue changes of {} from {}".format(site.name,i.path))
                 Crawler(site,injector).import_changes(i)
             return
-        if command == "metric":
-            for i in projects:
-                Metric().leadtime(i.path)
-            return
 
-    if arguments["group"]:
-        if command == "import":
-            # can not import more than 1000 groups now
-            data = Crawler.create_client(site).get_groups()
-            injector.insert_data(Parser.parse_groups(data,site.server_type))
-            logging.info("total imported groups {}".format(len(data)))
-        return
+    if arguments["metric"]:
+        if command == "leadtime":
+            status_start,status_end = arguments["--status"].split(",")
+            for i in projects:
+                Metric().leadtime(i.path,status_start=status_start,status_end=status_end)
 
 if __name__ == '__main__':
     main()

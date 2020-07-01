@@ -66,19 +66,12 @@ pip3 install -r requirements.txt
 python3 -m pmfellow 
 ```
 
-## Docker image
+## Docker image  
 
+## Example
+caculate metric lead time    
+```
+python3 -m pmfellow issue log --site=1 --project=1  
+python3 -m pmfellow metric leadtime --site=1 --project=1 --status="IN QA,Done"  
+```
 
-## For ubuntu 16  
-```
-sudo apt-get update
-export LC_ALL=C
-sudo apt install software-properties-common
-sudo add-apt-repository ppa:deadsnakes/ppa
-sudo apt-get update
-sudo apt install python3.7
-sudo ln -s /usr/bin/python3.7 /usr/bin/python3
-sudo apt-get install python3.7-gdbm
-sudo apt install python3-pip
-pip3 install wheel
-```
