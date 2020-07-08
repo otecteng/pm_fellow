@@ -101,3 +101,5 @@ class JiraClient(CrawlerClient):
         # for i in workflow:
         #     i["steps"] = self.query("/rest/projectconfig/1/workflow?workflowName={}".format(i["workflow"]))["sources"]
 
+    def get_project_meta(self,project):
+        return self.getSingleResource("/rest/api/2/issue/createmeta?projectKeys={}&expand=projects.issuetypes.fields".format(project))

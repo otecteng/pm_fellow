@@ -142,6 +142,9 @@ def main():
                     for i in data:
                         f.write("{},{}\r\n".format(i.id,i.summary))
             return
+        if command == "meta":
+            Crawler(site,injector).import_meta(projects)
+            return
 
     if arguments["metric"]:
         if command == "leadtime":

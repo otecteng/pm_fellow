@@ -76,6 +76,14 @@ class Crawler:
         return
 
     @log_time
+    def import_meta(self,projects = None):
+        meta = {}
+        for i in projects:
+            meta[i.path] = self.client.get_project_meta(i.path)
+        with open("meta.json","w") as outfile:
+            json.dump(meta, outfile)
+
+    @log_time
     def import_boards(self):
         boards = []
         for paged_objs in self.page_objects(Parser.json_to_db(self.client.get_boards()["views"],Board,site=self.site),100):
