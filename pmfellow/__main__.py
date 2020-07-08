@@ -6,7 +6,7 @@ Usage:
     pmfellow project <command> [--site=<id>] [--since=<id>] [--private] [--project=<id>] [--projects=<filter>] [--logging=<debug>]
     pmfellow user <command> [--site=<id>] [--since=<id>] [--until=<id>] [--logging=<debug>]
     pmfellow group <command> [--site=<id>] [<args>]
-    pmfellow issue <command> [--site=<id>] [--project=<id>] [--since=<id>] [--limit=<n>] [--until=<date>] [--logging=<debug>]
+    pmfellow issue <command> [--site=<id>] [--project=<id>] [--since=<id>] [--issuetype=<issuetype>] [--logging=<debug>] [--dump=<True>]
     pmfellow metric <command> [--site=<id>] [--project=<id>] [--status=<a,b>]
     pmfellow board <command> [--site=<id>] [<args>]
 
@@ -21,6 +21,7 @@ Options:
     --until=<date>   until date of commit
     --status=<a,b>    story status of start and end
     --logging=<debug> logging level
+    --export=<json> json
 
 Example:
     pmfellow db init --conn=root:xxx@localhost
@@ -127,12 +128,19 @@ def main():
             if arguments["--until"]:
                 until_date = datetime.datetime.strptime(arguments["--until"], "%Y-%m-%d")
             logging.info("importing issues of {} from ".format(site.name,until_date))
-            Crawler(site,injector).import_issues(projects,limit = arguments["--limit"], until = until_date)
+            Crawler(site,injector).import_issues(projects,dump = arguments["--dump"])
             return
         if command == "log":
             for i in projects:
                 logging.info("importing issue changes of {} from {}".format(site.name,i.path))
-                Crawler(site,injector).import_changes(i)
+                Crawler(site,injector).import_changes(i,issuetype=arguments["--issuetype"],dump = arguments["--dump"])
+            return
+        if command == "export":
+            for i in projects:
+                data = injector.get_issues(arguments["--site"],project=i.path)
+                with open("{}.csv".format(i.path),"w",encoding="utf-8") as f:
+                    for i in data:
+                        f.write("{},{}\r\n".format(i.id,i.summary))
             return
 
     if arguments["metric"]:

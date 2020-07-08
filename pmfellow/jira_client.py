@@ -62,10 +62,10 @@ class JiraClient(CrawlerClient):
         return self.getResource("/rest/api/2/search?jql=project={}&fields=created,updated,issuetype,creator,status,summary,description".format(project.path),limit = limit,data_path="issues")
 
     def get_users(self,since = ""):
-        return self.getResource("/api/v4/users?")
+        return self.getResource("/rest/api/2/user/search?username=.")
 
     def get_releases(self,project):
-        return self.getResource("/api/v4/projects/{}/releases?".format(project))
+        return self.getResource("/rest/api/2/project/{}/version?".format(project))
 
     def get_boards(self):
         return self.getSingleResource("/rest/greenhopper/latest/rapidviews/list")
@@ -77,8 +77,12 @@ class JiraClient(CrawlerClient):
         res = self.getSingleResource("/rest/agile/1.0/board/{}/project".format(board))["values"]
         return list(map(lambda x:x["key"],res))
 
-    def get_issue_changelog(self,issue):
+    def get_issue_changelog(self,issue,dump = False):
         ret = self.getSingleResource("/rest/agile/1.0/issue/{}?expand=changelog".format(issue.oid))
+        if dump:
+            with open("dump/{}.json".format(issue.id),"w") as outfile:
+                outfile.write(json.dumps(ret))
+
         if "changelog" not in ret:
             return {"issue":issue.oid,"logs":[]}
         changelogs = []

@@ -61,7 +61,7 @@ class Crawler:
         return projects
         
     @log_time
-    def import_issues(self,projects = None,limit = None, until = None):
+    def import_issues(self,projects = None,limit = None, until = None, dump = None ):
         projects = self.get_default_projects(projects)
 
         for idx,i in enumerate(projects):
@@ -92,7 +92,6 @@ class Crawler:
                 projects.append({"oid":i.oid,"name":i.name,"projects":data[i]})
         with open("board_projects.json","w") as outfile:
             json.dump(projects, outfile)
-
         return
 
     @log_time
@@ -114,12 +113,12 @@ class Crawler:
         return users
 
     @log_time
-    def import_changes(self, project, limit = None, until = None):
-        issues = self.injector.get_issues(site = self.site.iid, project = project.path )
+    def import_changes(self, project, limit = None, until = None, issuetype = None, dump = False):
+        issues = self.injector.get_issues(site = self.site.iid, project = project.path,issuetype=issuetype )
         logging.info(issues)
         changes = []
         for paged_objs in self.page_objects(issues,100):
-            data = self.execute_parallel(lambda x:(x,self.client.get_issue_changelog(x)),paged_objs)
+            data = self.execute_parallel(lambda x:(x,self.client.get_issue_changelog(x,dump=dump)),paged_objs)
             changes.extend(data.values())
         with open("{}.json".format(project.path),"w") as outfile:
             json.dump(changes, outfile)
