@@ -78,9 +78,12 @@ class JiraClient(CrawlerClient):
         return list(map(lambda x:x["key"],res))
 
     def get_issue_changelog(self,issue,dump = False):
+        file = "dump/{}.json".format(issue.id)
+        if os.path.isfile(file):
+            return {"issue":issue.oid,"created_at":str(issue.created_at),"logs":[]}
         ret = self.getSingleResource("/rest/agile/1.0/issue/{}?expand=changelog".format(issue.oid))
         if dump:
-            with open("dump/{}.json".format(issue.id),"w") as outfile:
+            with open(file,"w") as outfile:
                 outfile.write(json.dumps(ret))
 
         if "changelog" not in ret:

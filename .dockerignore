@@ -3,5 +3,6 @@ infrastructure/
 data/
 oauth/
 test/
+dump/*
 *.csv
 *.json

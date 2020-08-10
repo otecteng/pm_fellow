@@ -35,9 +35,10 @@ nohup pmfellow project import --site=site_iid &
 pmfellow project import --site=site_iid
 ```
 
-1.6 get project issues  
+1.6 get project issues  and change logs
 ```
-pmfellow issue import --site=site_iid [--since=iid] [--project=project_iid] 
+pmfellow issue import --site=site_iid [--since=iid] [--project=project_iid]
+pmfellow issue log --site=site_iid [--project=project_iid] [--dump=true]
 ```
 
 # JIRA SaaS User  
@@ -69,9 +70,15 @@ python3 -m pmfellow
 ## Docker image  
 
 ## Example
-caculate metric lead time    
+Download issue change log and caculate metric lead time    
 ```
 python3 -m pmfellow issue log --site=1 --project=1  
-python3 -m pmfellow metric leadtime --site=1 --project=1 --status="IN QA,Done"  
+python3 -m pmfellow metric leadtime --site=1 --project=1 --status="IN QA,Done"
+```
+
+Want to know the practise of project management? what kind of issue types are used in projects
+```
+python3 -m pmfellow issue meta --site=1
+python3 -m pmfellow board import --site=1
 ```
 

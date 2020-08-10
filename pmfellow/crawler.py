@@ -123,7 +123,6 @@ class Crawler:
     @log_time
     def import_changes(self, project, limit = None, until = None, issuetype = None, dump = False):
         issues = self.injector.get_issues(site = self.site.iid, project = project.path,issuetype=issuetype )
-        logging.info(issues)
         changes = []
         for paged_objs in self.page_objects(issues,100):
             data = self.execute_parallel(lambda x:(x,self.client.get_issue_changelog(x,dump=dump)),paged_objs)
